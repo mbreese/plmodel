@@ -1,0 +1,7 @@
+__pycache__/
+**/__pycache__
+data/
+html/
+*.pyc
+.api_key
+.DS_Store
