@@ -914,7 +914,8 @@ def generate_report(all_results, standings, completed_count, remaining_count,
     </div>
 
     <div class="footer">
-        Generated {now}
+        Generated {now}<br>
+        <span style="font-size: 10px;">Disclaimer: These are simulated statistical models for entertainment purposes only. Results are based on publicly available data and are believed to be accurate, but no guarantees are made.</span>
     </div>
 </div>
 

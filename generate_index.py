@@ -145,7 +145,8 @@ def main():
         {"".join(cards)}
     </div>
     <div class="footer">
-        Updated {now}
+        Updated {now}<br>
+        <span style="font-size: 10px;">Disclaimer: These are simulated statistical models for entertainment purposes only. Results are based on publicly available data and are believed to be accurate, but no guarantees are made.</span>
     </div>
 </div>
 </body>
