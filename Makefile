@@ -11,7 +11,7 @@ all: fetch reports
 fetch:
 	python3 fetch.py $(LEAGUES)
 
-reports: $(LEAGUES)
+reports: $(LEAGUES) index
 
 PL: data/PL.csv
 	python3 plmodel.py --fixtures data/PL.csv --html html/PL-predictions.html \
@@ -48,6 +48,9 @@ PPL: data/PPL.csv
 BSA: data/BSA.csv
 	python3 plmodel.py --fixtures data/BSA.csv --html html/BSA-predictions.html \
 		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
+
+index:
+	python3 generate_index.py
 
 html-only:
 	@for league in $(LEAGUES); do \
