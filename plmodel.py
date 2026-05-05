@@ -4,6 +4,7 @@
 import argparse
 import os
 import sys
+import time
 
 from models import MODELS
 from simulate import (
@@ -173,6 +174,7 @@ def main():
 
     # HTML report mode: run all models
     if args.html is not None:
+        start_time = time.time()
         print(f"\nCompleted: {len(completed)} matches | Remaining: {len(remaining)} matches")
         print(f"Running {args.iterations:,} simulations per model...")
 
@@ -204,6 +206,10 @@ def main():
             output_path=args.html,
         )
         print(f"Report written to {args.html}")
+
+        elapsed = time.time() - start_time
+        minutes, seconds = divmod(int(elapsed), 60)
+        print(f"Elapsed time: {minutes}:{seconds:02d}")
         return
 
     # Single model mode
