@@ -67,18 +67,18 @@ class RateLimitedClient:
 
 
 def load_api_key():
-    """Load API key from .api_key file."""
-    if not os.path.exists(API_KEY_FILE):
-        print(f"Error: API key file '{API_KEY_FILE}' not found.", file=sys.stderr)
-        print(f"Get a free key at https://www.football-data.org/client/register", file=sys.stderr)
-        print(f"Then save it to '{API_KEY_FILE}'", file=sys.stderr)
-        sys.exit(1)
+    """Load API key from environment variable or .api_key file."""
+    key = os.environ.get("FOOTBALL_DATA_API_KEY", "").strip()
 
-    with open(API_KEY_FILE) as f:
-        key = f.read().strip()
+    if not key and os.path.exists(API_KEY_FILE):
+        with open(API_KEY_FILE) as f:
+            key = f.read().strip()
 
     if not key:
-        print(f"Error: '{API_KEY_FILE}' is empty.", file=sys.stderr)
+        print("Error: No API key found.", file=sys.stderr)
+        print("Set FOOTBALL_DATA_API_KEY environment variable, or", file=sys.stderr)
+        print(f"save your key to '{API_KEY_FILE}'", file=sys.stderr)
+        print("Get a free key at https://www.football-data.org/client/register", file=sys.stderr)
         sys.exit(1)
 
     return key

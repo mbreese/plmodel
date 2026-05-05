@@ -24,10 +24,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create API key file
-        run: echo "${{ secrets.FOOTBALL_DATA_API_KEY }}" > .api_key
-
       - name: Fetch data
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: python fetch.py PL ELC PD BL1 SA FL1 DED PPL BSA
 
       - name: Run simulations
