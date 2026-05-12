@@ -66,6 +66,16 @@ def generate_report(all_results, standings, completed_count, remaining_count,
         bottom_n: bottom N cutoff
         output_path: output file path
     """
+    MODEL_DESCRIPTIONS = {
+        "global": "Uses fixed historical base rates for all matches regardless of the teams playing. Default rates: 46% home win, 25% draw, 29% away win. The simplest baseline model — useful as a reference point.",
+        "season": "Calculates home win, draw, and away win probabilities from completed matches in the current season. Rates update as more matches are played but do not consider individual team strength. Falls back to global rates if no matches have been completed yet.",
+        "poisson": "Estimates per-team attack and defense ratings based on match results, then models expected goals using a Poisson distribution. Supports exponential decay weighting (half-life) to emphasize recent form. Produces expected goals (xG), most likely scorelines, and 95% confidence intervals.",
+        "dixoncoles": "Extends the Poisson model with a low-score correlation adjustment (Dixon & Coles, 1997). Estimates a rho parameter that corrects probabilities for common low-scoring outcomes (0-0, 1-0, 0-1, 1-1), producing more realistic scoreline distributions than a standard Poisson model.",
+        "negbin": "A negative binomial variant of the Poisson model that accounts for overdispersion — the tendency for real goal distributions to have higher variance than Poisson predicts. Estimates an alpha parameter from season data; when alpha is zero, it reduces to the standard Poisson model.",
+        "elo": "Uses the Elo rating system (named after its creator Arpad Elo), which maps rating differences to match outcome probabilities. Each team maintains a rating updated after every match (K-factor = 20). Draw probability is calibrated from observed season draw rates and varies with the rating gap between teams.",
+        "elopoisson": "A hybrid model that combines Elo ratings (named after creator Arpad Elo) with Poisson goal sampling. Converts the Elo rating difference into expected goals using league averages, then samples scorelines from a Poisson distribution. Benefits from Elo's implicit time-weighting while producing full scoreline predictions.",
+    }
+
     num_teams = len(standings)
     sorted_standings = sorted(
         standings.items(),
@@ -181,9 +191,12 @@ def generate_report(all_results, standings, completed_count, remaining_count,
         extra_th = "".join(f'<th class="extra-col">{html.escape(h)}</th>' for h in extra_headers)
         pts_gd_th = '<th>Pts CI</th><th>GD CI</th>' if has_gd else ''
 
+        model_desc = MODEL_DESCRIPTIONS.get(name, "")
+        about_link = f'<a href="#" class="model-about-link" onclick="event.preventDefault();showModelAbout(\'{html.escape(name)}\')">about this model</a>' if model_desc else ""
+
         panel_html = f'''
         <div class="panel" id="{panel_id}">
-            <div class="model-info">{html.escape(model_str)}</div>
+            <div class="model-info">{html.escape(model_str)}{about_link}</div>
             <table>
                 <thead>
                     <tr>
@@ -852,6 +865,69 @@ def generate_report(all_results, standings, completed_count, remaining_count,
     .legend-swatch.top {{ background: var(--zone-top-border); }}
     .legend-swatch.bottom {{ background: var(--zone-bottom-border); }}
 
+    /* Model about link */
+    .model-about-link {{
+        float: right;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        color: var(--text-tertiary);
+        text-decoration: none;
+        cursor: pointer;
+    }}
+
+    .model-about-link:hover {{
+        color: var(--accent);
+        text-decoration: underline;
+    }}
+
+    /* Model about modal */
+    .model-about-overlay {{
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 200;
+        padding: 40px 20px;
+        overflow-y: auto;
+    }}
+
+    .model-about-overlay.visible {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }}
+
+    .model-about-box {{
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        max-width: 480px;
+        width: 100%;
+        overflow: hidden;
+    }}
+
+    .model-about-header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+    }}
+
+    .model-about-header h3 {{
+        font-family: 'Instrument Serif', serif;
+        font-size: 22px;
+        font-weight: 400;
+    }}
+
+    .model-about-body {{
+        padding: 20px 24px;
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--text-secondary);
+    }}
+
     /* Footer */
     .footer {{
         margin-top: 48px;
@@ -923,8 +999,44 @@ def generate_report(all_results, standings, completed_count, remaining_count,
     <div class="team-detail" id="team-detail"></div>
 </div>
 
+<div class="model-about-overlay" id="model-about-overlay" onclick="if(event.target===this)closeModelAbout()">
+    <div class="model-about-box">
+        <div class="model-about-header">
+            <h3 id="model-about-title"></h3>
+            <button class="team-detail-close" onclick="closeModelAbout()">Close</button>
+        </div>
+        <div class="model-about-body" id="model-about-body"></div>
+    </div>
+</div>
+
 <script>
 const FIXTURE_DATA = {fixture_data_json};
+
+const MODEL_DESCS = {json.dumps({name: desc for name, desc in MODEL_DESCRIPTIONS.items()})};
+
+const MODEL_TITLES = {{
+    "global": "Global Rate",
+    "season": "Season Rate",
+    "poisson": "Poisson",
+    "dixoncoles": "Dixon-Coles",
+    "negbin": "Negative Binomial",
+    "elo": "Elo",
+    "elopoisson": "Elo-Poisson",
+}};
+
+function showModelAbout(name) {{
+    document.getElementById('model-about-title').textContent = MODEL_TITLES[name] || name;
+    document.getElementById('model-about-body').textContent = MODEL_DESCS[name] || '';
+    document.getElementById('model-about-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+}}
+
+function closeModelAbout() {{
+    document.getElementById('model-about-overlay').classList.remove('visible');
+    if (!document.getElementById('team-detail-overlay').classList.contains('visible')) {{
+        document.body.style.overflow = '';
+    }}
+}}
 
 function switchTab(btn) {{
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1069,6 +1181,7 @@ function closeTeamDetail() {{
 
 document.addEventListener('keydown', e => {{
     if (e.key === 'Escape') {{
+        closeModelAbout();
         closeTeamDetail();
         document.getElementById('league-dropdown').classList.remove('open');
     }}
