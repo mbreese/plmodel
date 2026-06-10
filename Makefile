@@ -4,7 +4,7 @@ HALF_LIFE ?= 10
 LEAGUES = PL ELC PD BL1 SA FL1 DED PPL
 ELC_ARGS = --top 6 --bottom 3
 
-.PHONY: all fetch reports clean html-only $(LEAGUES)
+.PHONY: all fetch reports index clean html-only $(LEAGUES)
 
 all: fetch reports
 
@@ -13,37 +13,20 @@ fetch:
 
 reports: $(LEAGUES) index
 
-PL: data/PL.csv
-	python3 plmodel.py --fixtures data/PL.csv --html html/PL-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
+# If the CSV is missing or only contains the header row (off-season or fetch
+# failure), write an off-season placeholder page and continue instead of erroring.
+define run_league
+	@if [ ! -s data/$@.csv ] || [ $$(wc -l < data/$@.csv) -le 1 ]; then \
+		echo "$@: no fixtures in data/$@.csv — writing off-season placeholder"; \
+		python3 write_offseason.py $@; \
+	else \
+		python3 plmodel.py --fixtures data/$@.csv --html html/$@-predictions.html \
+			--half-life $(HALF_LIFE) --iterations $(ITERATIONS) $($@_ARGS); \
+	fi
+endef
 
-ELC: data/ELC.csv
-	python3 plmodel.py --fixtures data/ELC.csv --html html/ELC-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS) $(ELC_ARGS)
-
-PD: data/PD.csv
-	python3 plmodel.py --fixtures data/PD.csv --html html/PD-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-BL1: data/BL1.csv
-	python3 plmodel.py --fixtures data/BL1.csv --html html/BL1-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-SA: data/SA.csv
-	python3 plmodel.py --fixtures data/SA.csv --html html/SA-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-FL1: data/FL1.csv
-	python3 plmodel.py --fixtures data/FL1.csv --html html/FL1-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-DED: data/DED.csv
-	python3 plmodel.py --fixtures data/DED.csv --html html/DED-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-PPL: data/PPL.csv
-	python3 plmodel.py --fixtures data/PPL.csv --html html/PPL-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
+PL ELC PD BL1 SA FL1 DED PPL:
+	$(run_league)
 
 index:
 	python3 generate_index.py

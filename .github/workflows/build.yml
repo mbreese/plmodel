@@ -27,23 +27,10 @@ jobs:
       - name: Fetch data
         env:
           FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
-        run: python fetch.py PL ELC PD BL1 SA FL1 DED PPL
+        run: make fetch
 
-      - name: Run simulations
-        run: |
-          for league in PL ELC PD BL1 SA FL1 DED PPL; do
-            echo "=== $league ==="
-            if [ "$league" = "ELC" ]; then
-              python plmodel.py --fixtures data/$league.csv --html html/$league-predictions.html \
-                --half-life 10 --iterations 100000 --top 6 --bottom 3
-            else
-              python plmodel.py --fixtures data/$league.csv --html html/$league-predictions.html \
-                --half-life 10 --iterations 100000
-            fi
-          done
-
-      - name: Generate index page
-        run: python generate_index.py
+      - name: Run simulations and build index
+        run: make reports
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
