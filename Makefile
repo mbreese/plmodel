@@ -1,7 +1,7 @@
 ITERATIONS ?= 100000
 HALF_LIFE ?= 10
 
-LEAGUES = PL ELC PD BL1 SA FL1 DED PPL BSA
+LEAGUES = PL ELC PD BL1 SA FL1 DED PPL
 ELC_ARGS = --top 6 --bottom 3
 
 .PHONY: all fetch reports clean html-only $(LEAGUES)
@@ -43,10 +43,6 @@ DED: data/DED.csv
 
 PPL: data/PPL.csv
 	python3 plmodel.py --fixtures data/PPL.csv --html html/PPL-predictions.html \
-		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
-
-BSA: data/BSA.csv
-	python3 plmodel.py --fixtures data/BSA.csv --html html/BSA-predictions.html \
 		--half-life $(HALF_LIFE) --iterations $(ITERATIONS)
 
 index:

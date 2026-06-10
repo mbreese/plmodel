@@ -97,7 +97,6 @@ def generate_report(all_results, standings, completed_count, remaining_count,
         "FL1": "Ligue 1",
         "DED": "Eredivisie",
         "PPL": "Primeira Liga",
-        "BSA": "Brasileir\u00e3o",
     }
 
     league_title = LEAGUE_NAMES.get(current_league, current_league)

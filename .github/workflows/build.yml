@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Daily at 8am UTC
+    - cron: '0 8 * 1-5,9-12 *'  # Daily at 8am UTC, paused June-August (off-season)
   workflow_dispatch:  # Manual trigger
 
 permissions:
@@ -27,11 +27,11 @@ jobs:
       - name: Fetch data
         env:
           FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
-        run: python fetch.py PL ELC PD BL1 SA FL1 DED PPL BSA
+        run: python fetch.py PL ELC PD BL1 SA FL1 DED PPL
 
       - name: Run simulations
         run: |
-          for league in PL ELC PD BL1 SA FL1 DED PPL BSA; do
+          for league in PL ELC PD BL1 SA FL1 DED PPL; do
             echo "=== $league ==="
             if [ "$league" = "ELC" ]; then
               python plmodel.py --fixtures data/$league.csv --html html/$league-predictions.html \
