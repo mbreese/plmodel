@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 330  # early-season runs take 4-5h; stay just under GitHub's 6h cap
     steps:
       - uses: actions/checkout@v4
 
